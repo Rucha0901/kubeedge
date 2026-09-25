@@ -2,6 +2,7 @@ package smgr
 
 import (
 	"io"
+	"time"
 
 	"github.com/lucas-clemente/quic-go"
 	"k8s.io/klog/v2"
@@ -28,7 +29,8 @@ func (s *Session) OpenStreamSync(streamUse api.UseType) (*Stream, error) {
 		return nil, err
 	}
 
-	// TODO: add write timeout
+	_ = stream.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	defer stream.SetWriteDeadline(time.Time{})
 	_, err = stream.Write([]byte(streamUse))
 	if err != nil {
 		klog.Errorf("write stream type, error: %+v", err)
@@ -48,7 +50,8 @@ func (s *Session) AcceptStream() (*Stream, error) {
 		return nil, err
 	}
 
-	// TODO: add read timeout
+	_ = stream.SetReadDeadline(time.Now().Add(10 * time.Second))
+	defer stream.SetReadDeadline(time.Time{})
 	typeBytes := make([]byte, api.UseLen)
 	_, err = io.ReadFull(stream, typeBytes)
 	if err != nil {

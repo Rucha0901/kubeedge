@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/lucas-clemente/quic-go"
 	"k8s.io/klog/v2"
@@ -66,11 +67,13 @@ func (c *QuicClient) getControlLane(s quic.Session) error {
 }
 
 // send the headers
-// TODO: add timeout?
 func (c *QuicClient) sendHeader() error {
 	msg := model.NewMessage("").
 		BuildRouter("", "", comm.ControlTypeHeader, comm.ControlTypeHeader).
 		FillBody(c.exOpts.Header)
+
+	_ = c.ctrlLane.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	defer c.ctrlLane.SetWriteDeadline(time.Time{})
 	err := c.ctrlLane.WriteMessage(msg)
 	if err != nil {
 		klog.Errorf("failed to write message, error: %+v", err)
@@ -81,6 +84,8 @@ func (c *QuicClient) sendHeader() error {
 	// ignore the response
 	// TODO: check the response content
 	var response model.Message
+	_ = c.ctrlLane.SetReadDeadline(time.Now().Add(10 * time.Second))
+	defer c.ctrlLane.SetReadDeadline(time.Time{})
 	err = c.ctrlLane.ReadMessage(&response)
 	if err != nil {
 		klog.Errorf("failed to read message, error: %+v", err)
