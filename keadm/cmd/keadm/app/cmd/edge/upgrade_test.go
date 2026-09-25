@@ -157,48 +157,7 @@ func TestUpgradeRun(t *testing.T) {
 		assert.Equal(t, 2, upgradeCalled)
 	})
 
-	// For compatibility with historical versions, It will be removed in v1.23
-	t.Run("also force upgrade when upgradeID not empty", func(t *testing.T) {
-		releaseCalled = false
-		var (
-			upgradeCalled int
-			scanCalled    bool
-		)
 
-		patches := gomonkey.NewPatches()
-		defer patches.Reset()
-
-		patches.ApplyMethodFunc(reflect.TypeOf(&upgrdeedge.TaskEventReporter{}), "Report",
-			func(_err error) error {
-				return nil
-			})
-		patches.ApplyMethodFunc(reflect.TypeOf(&bufio.Scanner{}), "Scan",
-			func() bool {
-				scanCalled = true
-				return false
-			})
-		patches.ApplyPrivateMethod(reflect.TypeOf(&upgradeExecutor{}), "prerun",
-			func(_opts UpgradeOptions) error {
-				upgradeCalled++
-				return nil
-			})
-		patches.ApplyPrivateMethod(reflect.TypeOf(&upgradeExecutor{}), "upgrade",
-			func(_opts UpgradeOptions) error {
-				upgradeCalled++
-				return nil
-			})
-
-		cmd := NewUpgradeCommand()
-
-		err := cmd.Flags().Set("upgradeID", "test-job")
-		assert.NoError(t, err)
-
-		err = cmd.RunE(nil, nil)
-		assert.NoError(t, err)
-		assert.False(t, scanCalled)
-		assert.True(t, releaseCalled)
-		assert.Equal(t, 2, upgradeCalled)
-	})
 
 	t.Run("occupied error no need to release", func(t *testing.T) {
 		releaseCalled = false

@@ -18,7 +18,6 @@ package edge
 
 import (
 	"github.com/spf13/cobra"
-	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -49,27 +48,6 @@ type UpgradeOptions struct {
 	ImageDigest string
 
 	BaseOptions
-
-	// UpgradeID is the name of the node upgrade job, used to report upgrade results.
-	// Deprecated: using keadm to report upgrade results is not a good way.
-	// For compatibility with historical versions, It will be removed in v1.23
-	UpgradeID string
-	// TaskType is the type of the task.
-	// Deprecated: using keadm to report upgrade results is not a good way.
-	// For compatibility with historical versions, It will be removed in v1.23
-	TaskType string
-	// HistoryID a random uuid string.
-	// Deprecated: Nowhere to use it.
-	// For compatibility with historical versions, It will be removed in v1.23
-	HistoryID string
-	// FromVersion uses to describe the version before upgrading.
-	// Deprecated: It should be obtained by some means rather than manually specified.
-	// For compatibility with historical versions, It will be removed in v1.23
-	FromVersion string
-	// DisableBackup is a flag to disable backup.
-	// Deprecated: This field will no longer be valid and a backup command will be provided.
-	// For compatibility with historical versions, It will be removed in v1.23
-	DisableBackup bool
 }
 
 type RollbackOptions struct {
@@ -109,34 +87,6 @@ func AddUpgradeFlags(cmd *cobra.Command, opts *UpgradeOptions) {
 		"Upgrade the node without prompting for confirmation")
 	cmd.Flags().StringVar(&opts.ImageDigest, "image-digest", opts.ImageDigest,
 		"Use this key to specify the correct image digest to verify the local image.")
-
-	// TODO: remove these flags in v1.23
-	const deprecatedMessage = "For compatibility with historical versions, It will be removed in v1.23"
-	cmd.Flags().StringVar(&opts.UpgradeID, "upgradeID", opts.UpgradeID,
-		"Use this key to specify Upgrade CR ID")
-	if err := cmd.Flags().MarkDeprecated("upgradeID", deprecatedMessage); err != nil {
-		klog.Error(err)
-	}
-	cmd.Flags().StringVar(&opts.HistoryID, "historyID", opts.HistoryID,
-		"Use this key to specify Upgrade CR status history ID.")
-	if err := cmd.Flags().MarkDeprecated("historyID", deprecatedMessage); err != nil {
-		klog.Error(err)
-	}
-	cmd.Flags().StringVar(&opts.FromVersion, "fromVersion", opts.FromVersion,
-		"Use this key to specify the origin version before upgrade")
-	if err := cmd.Flags().MarkDeprecated("fromVersion", deprecatedMessage); err != nil {
-		klog.Error(err)
-	}
-	cmd.Flags().StringVar(&opts.TaskType, "type", "upgrade",
-		"Use this key to specify the task type for reporting status.")
-	if err := cmd.Flags().MarkDeprecated("type", deprecatedMessage); err != nil {
-		klog.Error(err)
-	}
-	cmd.Flags().BoolVar(&opts.DisableBackup, "disable-backup", opts.DisableBackup,
-		"Use this key to specify the backup enable for upgrade.")
-	if err := cmd.Flags().MarkDeprecated("disable-backup", deprecatedMessage); err != nil {
-		klog.Error(err)
-	}
 }
 
 // AddRollbackFlags adds some flags to the rollback command, and use RollbackOptions struct to map these flags.

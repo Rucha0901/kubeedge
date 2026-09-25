@@ -50,10 +50,7 @@ func NewUpgradeCommand() *cobra.Command {
 		Long:  "Upgrade the edge node to the desired version.\n" + upgradeTips,
 		RunE: func(_cmd *cobra.Command, _args []string) error {
 			fmt.Println(upgradeTips)
-			// If the opts.UpgradeID is not empty, it means that it‘s the command triggered by the v1alpha1 node upgrade job.
-			// At this time, we cannot add input, which will cause the upgrade task to be blocked.
-			// The opts.UpgradeID judgment for compatibility with historical versions, It will be removed in v1.23.
-			if !opts.Force && opts.UpgradeID == "" {
+			if !opts.Force {
 				fmt.Print("Are you sure you want to proceed? [y/N]: ")
 				s := bufio.NewScanner(os.Stdin)
 				s.Scan()
@@ -65,11 +62,10 @@ func NewUpgradeCommand() *cobra.Command {
 					return nil
 				}
 			}
-
 			var err error
 			defer func() {
 				// Report the result of the rollback process.
-				reporter := executor.newReporter(opts.UpgradeID, opts.ToVersion)
+				reporter := executor.newReporter(opts.ToVersion)
 				if reperr := reporter.Report(err); reperr != nil {
 					klog.Errorf("failed to report upgrade result: %v", reperr)
 				}
@@ -142,15 +138,8 @@ func (executor *upgradeExecutor) upgrade(ctx context.Context, opts UpgradeOption
 	return nil
 }
 
-func (executor *upgradeExecutor) newReporter(upgradeID, toVersion string) upgrdeedge.Reporter {
-	var reporter upgrdeedge.Reporter
-	if upgradeID != "" {
-		// For compatibility with historical versions, It will be removed in v1.23
-		reporter = upgrdeedge.NewTaskEventReporter(upgradeID, upgrdeedge.EventTypeUpgrade, executor.cfg)
-	} else {
-		reporter = upgrdeedge.NewJSONFileReporter(upgrdeedge.EventTypeUpgrade, executor.currentVersion, toVersion)
-	}
-	return reporter
+func (executor *upgradeExecutor) newReporter(toVersion string) upgrdeedge.Reporter {
+	return upgrdeedge.NewJSONFileReporter(upgrdeedge.EventTypeUpgrade, executor.currentVersion, toVersion)
 }
 
 // getEdgeCoreBinary pulls the installation-package image and obtains the edgecore binary from it.
